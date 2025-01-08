@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import project.Personal.content_calender.entity.UserEntity;
 import project.Personal.content_calender.service.UserService;
@@ -22,6 +22,8 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    private final BCryptPasswordEncoder password_encoder = new BCryptPasswordEncoder(5);
 
     /**
      * Create a new user.
@@ -49,7 +51,7 @@ public class UserController {
 
         try {
             // Hash the password
-            String hashedPassword = hashPassword(user.getPassword());
+            String hashedPassword = password_encoder.encode(user.getPassword());
             user.setPassword(hashedPassword);
 
             // Set created and updated timestamps
@@ -73,9 +75,10 @@ public class UserController {
         return pattern.matcher(email).matches();
     }
 
-    // Utility to hash password
-    private String hashPassword(String password) {
-        return BCrypt.hashpw(password, BCrypt.gensalt()); // Use BCrypt for secure hashing
+    @PostMapping("/login")
+    public String login(@RequestBody UserEntity user){
+        return userService.verifyLogin(user);
+
     }
 
 

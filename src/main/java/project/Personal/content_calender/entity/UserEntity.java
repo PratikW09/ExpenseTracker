@@ -26,6 +26,7 @@ public class UserEntity {
     private String email; // User's email, must be unique
 
     private String name; // User's name
+   
 
     private String password; // Encrypted password of the user
 
@@ -34,6 +35,7 @@ public class UserEntity {
 
     @LastModifiedDate
     private LocalDateTime updatedAt; // Timestamp for when the user is updated
+    // String getEmail;
 
     /**
      * Manually updates the 'updatedAt' timestamp to the current time.

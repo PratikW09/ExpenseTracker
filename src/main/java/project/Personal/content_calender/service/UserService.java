@@ -1,6 +1,9 @@
 package project.Personal.content_calender.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import project.Personal.content_calender.entity.UserEntity;
 import project.Personal.content_calender.repository.UserRepository;
@@ -17,8 +20,15 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    AuthenticationManager authManager;
+
+    @Autowired
+    private JWTService jwtService;
+
     /**
      * Creates a new user in the database.
+     * 
      * @param user the user entity to be created
      * @return the saved user entity
      */
@@ -28,6 +38,7 @@ public class UserService {
 
     /**
      * Retrieves a user by their ID.
+     * 
      * @param id the unique ID of the user
      * @return an Optional containing the user entity, if found
      */
@@ -37,6 +48,7 @@ public class UserService {
 
     /**
      * Deletes a user by their ID.
+     * 
      * @param id the unique ID of the user to be deleted
      */
     public void deleteUserById(String id) {
@@ -45,7 +57,8 @@ public class UserService {
 
     /**
      * Updates the details of an existing user.
-     * @param id the unique ID of the user to be updated
+     * 
+     * @param id          the unique ID of the user to be updated
      * @param updatedUser the user entity containing updated information
      * @return the updated user entity
      * @throws RuntimeException if the user is not found
@@ -64,6 +77,7 @@ public class UserService {
 
     /**
      * Retrieves all users in the database.
+     * 
      * @return a list of all user entities
      */
     public List<UserEntity> getAllUsers() {
@@ -72,10 +86,22 @@ public class UserService {
 
     /**
      * Retrieves a user by their email.
+     * 
      * @param email the email of the user to be retrieved
      * @return an Optional containing the user entity, if found
      */
     public UserEntity getUserByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    public String verifyLogin(UserEntity user) {
+
+        Authentication authentication = authManager
+                .authenticate(new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword()));
+
+        if (authentication.isAuthenticated()) {
+            return jwtService.generateJWTToken(user.getEmail());
+        }
+        return "fail from verfylogin service";
     }
 }
