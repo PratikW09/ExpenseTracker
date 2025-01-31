@@ -1,15 +1,17 @@
 package project.Personal.content_calender.service;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+
 import project.Personal.content_calender.entity.UserEntity;
 import project.Personal.content_calender.repository.UserRepository;
-
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Service class for managing user-related operations.
@@ -36,40 +38,31 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    /**
-     * Retrieves a user by their ID.
-     * 
-     * @param id the unique ID of the user
-     * @return an Optional containing the user entity, if found
-     */
+    
     public Optional<UserEntity> getUserById(String id) {
         return userRepository.findById(id);
     }
 
-    /**
-     * Deletes a user by their ID.
-     * 
-     * @param id the unique ID of the user to be deleted
-     */
+   
     public void deleteUserById(String id) {
         userRepository.deleteById(id);
     }
 
-    /**
-     * Updates the details of an existing user.
-     * 
-     * @param id          the unique ID of the user to be updated
-     * @param updatedUser the user entity containing updated information
-     * @return the updated user entity
-     * @throws RuntimeException if the user is not found
-     */
+   
     public UserEntity updateUser(String id, UserEntity updatedUser) {
         return userRepository.findById(id)
                 .map(existingUser -> {
+                    // Update the existing user fields with the values from updatedUser
                     existingUser.setName(updatedUser.getName());
                     existingUser.setPassword(updatedUser.getPassword());
                     existingUser.setEmail(updatedUser.getEmail());
-                    existingUser.updateTimestamp(); // Ensure that the timestamp is updated
+                    existingUser.setTargetExpense(updatedUser.getTargetExpense()); // Add any other fields that should
+                                                                                   // be updated
+
+                    // Update the timestamp for the last modification
+                    existingUser.updateTimestamp();
+
+                    // Save the updated user entity to the database
                     return userRepository.save(existingUser);
                 })
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -95,12 +88,13 @@ public class UserService {
     }
 
     public String verifyLogin(UserEntity user) {
-
+        System.out.println("in userService verfiy login controller");
         Authentication authentication = authManager
                 .authenticate(new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword()));
-
+        System.out.println("verfiy Login : " + authentication);
         if (authentication.isAuthenticated()) {
-            return jwtService.generateJWTToken(user.getEmail());
+            UserEntity userDB = userRepository.findByEmail(user.getEmail());
+            return jwtService.generateToken(userDB);
         }
         return "fail from verfylogin service";
     }

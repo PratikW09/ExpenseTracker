@@ -1,17 +1,19 @@
 package project.Personal.content_calender.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import project.Personal.content_calender.entity.UserEntity;
 
 public interface UserRepository extends MongoRepository<UserEntity, String> {
-    /**
-     * Finds a user by their email.
-     *
-     * @param email the email of the user
-     * @return the UserEntity with the specified email, or null if not found
-     */
+
+    // Find user by email
     UserEntity findByEmail(String email);
 
-    // UserEntity findByUsername(String user);
+    // Check if a user exists by email (for registration)
+    boolean existsByEmail(String email);
+
+    // Find user by ID (for referencing or fetching user details by their unique ID)
+    Optional<UserEntity> findById(String id); // Return type should be Optional<UserEntity>
 }
