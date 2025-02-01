@@ -2,7 +2,6 @@ package project.Personal.content_calender.entity;
 
 import java.time.LocalDateTime;
 
-
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -28,6 +27,8 @@ public class UserEntity {
     private String password;
 
     private Double targetExpense;
+
+    private Double currentExpense;
 
     private String role = "USER"; // Role field with default value "USER"
 

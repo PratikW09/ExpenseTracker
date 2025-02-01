@@ -1,5 +1,6 @@
 package project.Personal.content_calender.controller;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -9,12 +10,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import project.Personal.content_calender.entity.ExpenseEntity;
 import project.Personal.content_calender.entity.UserEntity;
 import project.Personal.content_calender.service.UserService;
 
@@ -27,8 +31,29 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    
-    
+    @GetMapping("/get-current-user")
+    public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String token) {
+        // Validate token
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid token format. Token should start with 'Bearer '");
+        }
+
+        token = token.substring(7); // Remove the "Bearer " prefix
+
+        // Get the current user from the token
+        Optional<UserEntity> userOpt = userService.getCurrUser(token);
+
+        // Check if the user is present
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("User not found for the provided token");
+        }
+
+        // Return the user if found
+        return ResponseEntity.ok(userOpt.get());
+    }
+
     @GetMapping("/get-by-id/{id}")
     public ResponseEntity<?> getUserById(@PathVariable String id) {
         logger.info("Received request to fetch user by ID: {}", id);
@@ -57,17 +82,14 @@ public class UserController {
         }
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable String id, @RequestBody UserEntity updatedUser) {
-        logger.info("Received request to update user with ID: {}", id);
-        try {
-            UserEntity user = userService.updateUser(id, updatedUser);
-            logger.info("User updated successfully with ID: {}", user.getId());
-            return ResponseEntity.ok(user);
-        } catch (Exception e) {
-            logger.error("Error updating user with ID: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update user");
+    @PatchMapping("/{userId}")
+    public ResponseEntity<?> updateUser(@PathVariable String userId, @RequestBody Map<String, Object> updates) {
+        Optional<UserEntity> updatedUser = userService.updateUser(userId, updates);
+
+        if (updatedUser.isPresent()) {
+            return ResponseEntity.ok(updatedUser.get());
         }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
     }
 
     /**
@@ -85,7 +107,5 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to fetch users");
         }
     }
-
-    
 
 }

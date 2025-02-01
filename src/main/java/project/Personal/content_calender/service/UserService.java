@@ -1,6 +1,7 @@
 package project.Personal.content_calender.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.bson.types.ObjectId;
@@ -38,51 +39,39 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    
     public Optional<UserEntity> getUserById(String id) {
         return userRepository.findById(id);
     }
 
-   
     public void deleteUserById(String id) {
         userRepository.deleteById(id);
     }
 
-   
-    public UserEntity updateUser(String id, UserEntity updatedUser) {
-        return userRepository.findById(id)
-                .map(existingUser -> {
-                    // Update the existing user fields with the values from updatedUser
-                    existingUser.setName(updatedUser.getName());
-                    existingUser.setPassword(updatedUser.getPassword());
-                    existingUser.setEmail(updatedUser.getEmail());
-                    existingUser.setTargetExpense(updatedUser.getTargetExpense()); // Add any other fields that should
-                                                                                   // be updated
+    public Optional<UserEntity> updateUser(String userId, Map<String, Object> updates) {
+        Optional<UserEntity> userOpt = userRepository.findById(userId);
 
-                    // Update the timestamp for the last modification
-                    existingUser.updateTimestamp();
+        if (userOpt.isPresent()) {
+            UserEntity user = userOpt.get();
 
-                    // Save the updated user entity to the database
-                    return userRepository.save(existingUser);
-                })
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            updates.forEach((key, value) -> {
+                switch (key) {
+                    case "name" -> user.setName((String) value);
+                    case "targetExpense" -> user.setTargetExpense(Double.valueOf(value.toString()));
+                    
+                }
+            });
+
+            userRepository.save(user);
+            return Optional.of(user);
+        }
+        return Optional.empty();
     }
-
-    /**
-     * Retrieves all users in the database.
-     * 
-     * @return a list of all user entities
-     */
+    
     public List<UserEntity> getAllUsers() {
         return userRepository.findAll();
     }
 
-    /**
-     * Retrieves a user by their email.
-     * 
-     * @param email the email of the user to be retrieved
-     * @return an Optional containing the user entity, if found
-     */
+    
     public UserEntity getUserByEmail(String email) {
         return userRepository.findByEmail(email);
     }
@@ -98,4 +87,14 @@ public class UserService {
         }
         return "fail from verfylogin service";
     }
+
+    public Optional<UserEntity> getCurrUser(String token) {
+        // Extract user email from token
+        String userEmail = jwtService.extractEmail(token);
+    
+        // Find user by email, wrapped in an Optional to handle the case where the user might not be found
+        return Optional.ofNullable(userRepository.findByEmail(userEmail));
+    }
+    
+    
 }
